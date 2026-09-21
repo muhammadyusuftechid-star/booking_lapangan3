@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signUp, useSession } from "@/lib/auth-client";
 import {
-  Trophy,
+  CalendarDays,
   Mail,
   Lock,
   User,
@@ -12,14 +12,11 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
-  ShieldCheck,
-  CalendarDays,
 } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
-  const { data: session, isPending: isSessionLoading } = useSession();
+  const { data: session } = useSession();
 
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState("");
@@ -40,12 +37,20 @@ export default function HomePage() {
     try {
       setGoogleLoading(true);
       setError(null);
-      await signIn.social({
+
+      const res = await signIn.social({
         provider: "google",
         callbackURL: "/dashboard",
       });
-    } catch (err: any) {
-      setError(err?.message || "Gagal masuk dengan akun Google");
+
+      if (res?.error) {
+        setError(res.error.message || "Gagal menghubungkan ke layanan Google");
+        setGoogleLoading(false);
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Terjadi kesalahan saat masuk dengan Google";
+      setError(message);
       setGoogleLoading(false);
     }
   };
@@ -87,87 +92,82 @@ export default function HomePage() {
           }, 800);
         }
       }
-    } catch (err: any) {
-      setError(err?.message || "Terjadi kesalahan sistem saat proses otentikasi.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan sistem saat proses otentikasi.";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (isSessionLoading) {
+  if (session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white text-slate-900">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-          <p className="text-sm text-slate-500 font-medium">Memeriksa status sesi...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-xs text-slate-500">Mengalihkan ke dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/70 flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900">
-      {/* Top Simple Minimalist Header */}
-      <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm shadow-emerald-600/20">
-            <Trophy className="w-5 h-5" />
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between text-slate-800">
+      {/* Header Minimalis */}
+      <header className="w-full bg-white border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-blue-600 text-white flex items-center justify-center">
+              <CalendarDays className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-sm text-slate-900">
+                Sistem Booking Lapangan
+              </span>
+            </div>
           </div>
-          <span className="font-bold text-slate-900 text-lg tracking-tight">
-            Arena<span className="text-emerald-600">Booking</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white border border-slate-200/80 px-3.5 py-1.5 rounded-full shadow-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Sistem Online</span>
         </div>
       </header>
 
-      {/* Main Authentication Card */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8 sm:px-6">
-        <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-          {/* Header Title */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-3 border border-emerald-100/60">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Portal Reservasi Olahraga</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              {isRegister ? "Buat Akun Baru" : "Selamat Datang"}
+      {/* Konten Autentikasi Tengah */}
+      <main className="flex-1 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-sm bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+          <div className="text-center mb-6">
+            <h1 className="text-lg font-bold text-slate-900">
+              {isRegister ? "Pendaftaran Akun" : "Masuk ke Akun"}
             </h1>
-            <p className="text-sm text-slate-500 mt-1.5">
+            <p className="text-xs text-slate-500 mt-1">
               {isRegister
-                ? "Daftar untuk memesan lapangan secara instan"
-                : "Masuk untuk mengakses dashboard & jadwal lapangan"}
+                ? "Isi formulir berikut untuk mendaftar akun baru"
+                : "Masukkan email dan password untuk melanjutkan"}
             </p>
           </div>
 
-          {/* Error & Success Messages */}
+          {/* Pesan Error & Sukses */}
           {error && (
-            <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-medium flex items-center gap-2.5">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500" />
+            <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-5 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-medium flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            <div className="mb-4 p-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
 
-          {/* Google OAuth Button */}
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading || loading}
-            type="button"
-            className="w-full h-11 flex items-center justify-center gap-3 rounded-2xl bg-white hover:bg-slate-50/80 text-slate-700 font-medium text-sm border border-slate-200 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed shadow-xs cursor-pointer mb-5"
+          {/* Tombol Login Google (Direct Link) */}
+          <a
+            href="/api/auth/login-google"
+            onClick={() => setGoogleLoading(true)}
+            className="w-full h-9 flex items-center justify-center gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium border border-slate-300 transition-colors cursor-pointer mb-4 no-underline"
           >
             {googleLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-600" />
             ) : (
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
                 <path
                   fill="#EA4335"
                   d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.4l3.7 2.9C6.5 7.4 9 5 12 5z"
@@ -186,61 +186,67 @@ export default function HomePage() {
                 />
               </svg>
             )}
-            <span>{googleLoading ? "Menghubungkan..." : "Lanjutkan dengan Google"}</span>
-          </button>
+            <span>{googleLoading ? "Menghubungkan ke Google..." : "Masuk dengan Google"}</span>
+          </a>
 
-          {/* Minimalist Divider */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-px bg-slate-100" />
-            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">atau email</span>
-            <div className="flex-1 h-px bg-slate-100" />
+          {/* Pembatas Minimalis */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-[11px] text-slate-400">atau</span>
+            <div className="flex-1 h-px bg-slate-200" />
           </div>
 
-          {/* Email Authentication Form */}
-          <form onSubmit={handleEmailAuth} className="space-y-3.5">
+          {/* Form Login / Register */}
+          <form onSubmit={handleEmailAuth} className="space-y-3">
             {isRegister && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap</label>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Nama Lengkap
+                </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <User className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required={isRegister}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Nama lengkap Anda"
-                    className="w-full h-11 bg-slate-50/50 border border-slate-200 rounded-2xl pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition-all"
+                    placeholder="Masukkan nama"
+                    className="w-full h-9 bg-white border border-slate-300 rounded-md pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Alamat Email
+              </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@email.com"
-                  className="w-full h-11 bg-slate-50/50 border border-slate-200 rounded-2xl pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition-all"
+                  placeholder="contoh@email.com"
+                  className="w-full h-9 bg-white border border-slate-300 rounded-md pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Kata Sandi</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Kata Sandi
+              </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimal 8 karakter"
-                  className="w-full h-11 bg-slate-50/50 border border-slate-200 rounded-2xl pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition-all"
+                  className="w-full h-9 bg-white border border-slate-300 rounded-md pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
             </div>
@@ -248,21 +254,21 @@ export default function HomePage() {
             <button
               type="submit"
               disabled={loading || googleLoading}
-              className="w-full h-11 mt-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 shadow-sm active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full h-9 mt-1 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-md flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <>
-                  <span>{isRegister ? "Daftar Akun" : "Masuk ke Dashboard"}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>{isRegister ? "Daftar Sekarang" : "Masuk"}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
           </form>
 
           {/* Toggle Login / Register */}
-          <div className="mt-6 text-center">
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
             <p className="text-xs text-slate-500">
               {isRegister ? "Sudah punya akun?" : "Belum punya akun?"}{" "}
               <button
@@ -272,27 +278,18 @@ export default function HomePage() {
                   setError(null);
                   setSuccessMsg(null);
                 }}
-                className="text-emerald-700 hover:text-emerald-800 font-semibold underline-offset-4 hover:underline transition-colors ml-1 cursor-pointer"
+                className="text-blue-600 hover:underline font-medium ml-1 cursor-pointer"
               >
-                {isRegister ? "Masuk di sini" : "Daftar sekarang"}
+                {isRegister ? "Masuk di sini" : "Daftar di sini"}
               </button>
             </p>
           </div>
         </div>
       </main>
 
-      {/* Clean Minimal Footer */}
-      <footer className="w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200/50">
-        <p>© 2026 ArenaBooking. Hak cipta dilindungi.</p>
-        <div className="flex items-center gap-4 text-slate-500 font-medium">
-          <span>Futsal</span>
-          <span>•</span>
-          <span>Badminton</span>
-          <span>•</span>
-          <span>Mini Soccer</span>
-          <span>•</span>
-          <span>Tenis</span>
-        </div>
+      {/* Footer Minimalis */}
+      <footer className="w-full bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        <p>© 2026 Booking Lapangan. All rights reserved.</p>
       </footer>
     </div>
   );

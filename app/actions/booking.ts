@@ -37,12 +37,11 @@ export async function createLapanganAction({
         description,
         location,
         price: Number(price),
-        picture_url: picture_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800",
+        picture_url: picture_url || null,
       },
     });
 
     revalidatePath("/dashboard");
-    revalidatePath("/dashboard/admin");
 
     return { success: true, data: newLapangan };
   } catch (error: any) {
@@ -66,7 +65,6 @@ export async function deleteLapanganAction(id: string) {
     });
 
     revalidatePath("/dashboard");
-    revalidatePath("/dashboard/admin");
 
     return { success: true };
   } catch (error: any) {
@@ -83,7 +81,6 @@ export async function deleteAllLapangansAction() {
     await prisma.lapangan.deleteMany({});
 
     revalidatePath("/dashboard");
-    revalidatePath("/dashboard/admin");
 
     return { success: true };
   } catch (error: any) {
@@ -159,13 +156,50 @@ export async function createBookingAction({
       });
     }
 
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    // Cek apakah lapangan pada jam tersebut sudah dipesan (Bukan CANCELLED)
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        lapanganId: lapanganId,
+        status: {
+          in: ["PENDING", "CONFIRMED"],
+        },
+        OR: [
+          {
+            // Slot baru mulai di tengah-tengah slot yang sudah ada
+            startTime: { lte: start },
+            endTime: { gt: start },
+          },
+          {
+            // Slot baru selesai di tengah-tengah slot yang sudah ada
+            startTime: { lt: end },
+            endTime: { gte: end },
+          },
+          {
+            // Slot baru mencakup keseluruhan slot yang sudah ada
+            startTime: { gte: start },
+            endTime: { lte: end },
+          },
+        ],
+      },
+    });
+
+    if (existingBooking) {
+      return {
+        success: false,
+        error: "Jadwal pada jam ini sudah dipesan orang lain. Silakan pilih jam atau lapangan lain.",
+      };
+    }
+
     // Buat data Booking
     const newBooking = await prisma.booking.create({
       data: {
         customerId: customer.id,
         lapanganId: lapanganId,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
+        startTime: start,
+        endTime: end,
         status: paymentType === "QRIS" ? "CONFIRMED" : "PENDING",
         payments: {
           create: {
@@ -183,50 +217,10 @@ export async function createBookingAction({
     });
 
     revalidatePath("/dashboard");
-    revalidatePath("/dashboard/admin");
 
     return { success: true, data: newBooking };
   } catch (error: any) {
     console.error("Error createBookingAction:", error);
     return { success: false, error: error.message || "Gagal membuat reservasi" };
-  }
-}
-
-// 7. Ambil semua data booking untuk Admin
-export async function getAllBookingsAdmin() {
-  try {
-    const bookings = await prisma.booking.findMany({
-      include: {
-        customer: true,
-        lapangan: true,
-        payments: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return { success: true, data: bookings };
-  } catch (error: any) {
-    console.error("Error getAllBookingsAdmin:", error);
-    return { success: false, error: error.message || "Gagal mengambil data booking admin" };
-  }
-}
-
-// 8. Update Status Booking oleh Admin
-export async function updateBookingStatusAction(
-  bookingId: string,
-  status: "CONFIRMED" | "CANCELLED"
-) {
-  try {
-    const updated = await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status },
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/admin");
-
-    return { success: true, data: updated };
-  } catch (error: any) {
-    console.error("Error updateBookingStatusAction:", error);
-    return { success: false, error: error.message || "Gagal mengubah status booking" };
   }
 }
