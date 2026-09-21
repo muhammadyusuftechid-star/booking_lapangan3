@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signUp, useSession } from "@/lib/auth-client";
+import { getUserRoleAction } from "@/app/actions/booking";
 import {
   CalendarDays,
   Mail,
@@ -12,6 +13,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -22,78 +25,115 @@ export default function HomePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlError = params.get("error");
+      if (urlError === "google_failed") {
+        return "Gagal masuk dengan Google. Periksa konfigurasi atau koneksi akun.";
+      }
+      if (urlError === "google_url_missing") {
+        return "URL autentikasi Google tidak ditemukan.";
+      }
+      if (urlError) {
+        return `Login gagal: ${urlError}`;
+      }
+    }
+    return null;
+  });
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (session) {
-      router.replace("/dashboard");
+    async function checkRedirect() {
+      if (session?.user?.email) {
+        const roleRes = await getUserRoleAction(session.user.email);
+        const role = roleRes.success
+          ? roleRes.role
+          : (session.user as { role?: string })?.role || "USER";
+        if (String(role).toUpperCase() === "ADMIN") {
+          router.replace("/admin");
+        } else {
+          router.replace("/user");
+        }
+      }
     }
+    checkRedirect();
   }, [session, router]);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleLogin = () => {
+    setGoogleLoading(true);
+    setError(null);
     try {
-      setGoogleLoading(true);
-      setError(null);
-
-      const res = await signIn.social({
-        provider: "google",
-        callbackURL: "/dashboard",
-      });
-
-      if (res?.error) {
-        setError(res.error.message || "Gagal menghubungkan ke layanan Google");
-        setGoogleLoading(false);
-      }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Terjadi kesalahan saat masuk dengan Google";
-      setError(message);
+      window.location.href = "/api/auth/login-google";
+    } catch {
+      setError("Gagal mengarahkan ke akun Google.");
       setGoogleLoading(false);
     }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     setSuccessMsg(null);
+
+    if (!email.trim() || !password.trim()) {
+      setError("Silakan isi alamat email dan kata sandi.");
+      return;
+    }
+
+    if (isRegister && !name.trim()) {
+      setError("Silakan masukkan nama lengkap Anda.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Kata sandi harus minimal 8 karakter.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       if (isRegister) {
         const res = await signUp.email({
-          email,
+          email: email.trim(),
           password,
-          name,
-          callbackURL: "/dashboard",
+          name: name.trim(),
+          callbackURL: "/user",
         });
         if (res.error) {
-          setError(res.error.message || "Pendaftaran gagal. Silakan coba lagi.");
+          setError(res.error.message || "Pendaftaran gagal. Periksa kembali format email dan kata sandi.");
         } else {
           setSuccessMsg("Akun berhasil dibuat! Mengalihkan ke dashboard...");
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 800);
+          router.replace("/user");
         }
       } else {
         const res = await signIn.email({
-          email,
+          email: email.trim(),
           password,
-          callbackURL: "/dashboard",
+          callbackURL: "/user",
         });
         if (res.error) {
-          setError(res.error.message || "Email atau password tidak sesuai.");
+          setError(res.error.message || "Email atau kata sandi salah. Silakan coba lagi atau daftar akun baru.");
         } else {
           setSuccessMsg("Berhasil masuk! Mengalihkan...");
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 800);
+          const roleRes = await getUserRoleAction(email.trim());
+          const role = roleRes.success
+            ? roleRes.role
+            : (res.data?.user as { role?: string })?.role || "USER";
+          if (String(role).toUpperCase() === "ADMIN") {
+            router.replace("/admin");
+          } else {
+            router.replace("/user");
+          }
         }
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Terjadi kesalahan sistem saat proses otentikasi.";
+      const message =
+        err instanceof Error ? err.message : "Terjadi kesalahan sistem saat proses otentikasi.";
       setError(message);
     } finally {
       setLoading(false);
@@ -101,11 +141,22 @@ export default function HomePage() {
   };
 
   if (session) {
+    const role = (session.user as { role?: string })?.role;
+    const targetUrl = role === "ADMIN" ? "/admin" : "/user";
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800">
-        <div className="flex flex-col items-center gap-2">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800 p-4">
+        <div className="flex flex-col items-center gap-2 text-center">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-          <p className="text-xs text-slate-500">Mengalihkan ke dashboard...</p>
+          <p className="text-xs text-slate-500">
+            {role === "ADMIN" ? "Mengalihkan ke Panel Administrator..." : "Mengalihkan ke dashboard..."}
+          </p>
+          <button
+            type="button"
+            onClick={() => router.replace(targetUrl)}
+            className="text-xs text-blue-600 hover:underline mt-2 font-medium cursor-pointer"
+          >
+            Klik di sini jika tidak beralih otomatis
+          </button>
         </div>
       </div>
     );
@@ -158,11 +209,12 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Tombol Login Google (Direct Link) */}
-          <a
-            href="/api/auth/login-google"
-            onClick={() => setGoogleLoading(true)}
-            className="w-full h-9 flex items-center justify-center gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium border border-slate-300 transition-colors cursor-pointer mb-4 no-underline"
+          {/* Tombol Login Google */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading || googleLoading}
+            className="w-full h-9 flex items-center justify-center gap-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium border border-slate-300 transition-colors cursor-pointer mb-4 disabled:opacity-50"
           >
             {googleLoading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-600" />
@@ -187,7 +239,7 @@ export default function HomePage() {
               </svg>
             )}
             <span>{googleLoading ? "Menghubungkan ke Google..." : "Masuk dengan Google"}</span>
-          </a>
+          </button>
 
           {/* Pembatas Minimalis */}
           <div className="flex items-center gap-2 mb-4">
@@ -241,13 +293,25 @@ export default function HomePage() {
               <div className="relative">
                 <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimal 8 karakter"
-                  className="w-full h-9 bg-white border border-slate-300 rounded-md pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                  className="w-full h-9 bg-white border border-slate-300 rounded-md pl-9 pr-9 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer transition-colors"
+                  aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5" />
+                  )}
+                </button>
               </div>
             </div>
 

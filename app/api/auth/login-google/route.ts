@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const authResponse = await auth.api.signInSocial({
       body: {
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/user",
       },
       headers: request.headers,
       asResponse: true,
