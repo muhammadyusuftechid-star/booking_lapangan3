@@ -8,6 +8,8 @@ import {
   ArrowRight
 } from "lucide-react";
 
+import AksiBooking from "./components/AksiBooking";
+
 const formatRupiah = (value: number) => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -33,7 +35,7 @@ export default async function AdminDashboardPage() {
   const pendapatan = payments.reduce((sum, pay) => sum + Number(pay.amount), 0);
 
   const recentBookings = await prisma.booking.findMany({
-    take: 5,
+    take: 10,
     orderBy: { createdAt: "desc" },
     include: {
       customer: { select: { name: true, email: true } },
@@ -118,19 +120,20 @@ export default async function AdminDashboardPage() {
                   <th className="px-6 py-3 font-semibold text-slate-500">Pelanggan</th>
                   <th className="px-6 py-3 font-semibold text-slate-500">Lapangan</th>
                   <th className="px-6 py-3 font-semibold text-slate-500">Status</th>
+                  <th className="px-6 py-3 font-semibold text-slate-500 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {recentBookings.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="p-6 text-center text-slate-400">Belum ada booking.</td>
+                    <td colSpan={4} className="p-6 text-center text-slate-400">Belum ada booking.</td>
                   </tr>
                 ) : (
                   recentBookings.map((b) => (
-                    <tr key={b.id} className="hover:bg-slate-50">
+                    <tr key={b.id} className="hover:bg-slate-50 transition">
                       <td className="px-6 py-4">
-                        <p className="font-semibold text-slate-900">{b.customer.name || "Tanpa Nama"}</p>
-                        <p className="text-[10px] text-slate-500">{b.customer.email}</p>
+                        <p className="font-semibold text-slate-900">{b.customer?.name || "Tanpa Nama"}</p>
+                        <p className="text-[10px] text-slate-500">{b.customer?.email}</p>
                       </td>
                       <td className="px-6 py-4 text-slate-700">{b.lapangan.name}</td>
                       <td className="px-6 py-4">
@@ -141,6 +144,9 @@ export default async function AdminDashboardPage() {
                         }`}>
                           {b.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <AksiBooking bookingId={b.id} currentStatus={b.status} />
                       </td>
                     </tr>
                   ))

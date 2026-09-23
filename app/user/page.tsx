@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
-import { getUserBookings, getLapangans } from "@/app/actions/booking";
+import { getUserBookings, getLapangans } from "@/app/user/actions";
 import { BookingWithRelations, Lapangan } from "@/types/booking";
 import {
   Clock,
@@ -11,6 +11,7 @@ import {
   Info,
   CheckCircle2,
 } from "lucide-react";
+import KartuStatistik from "./components/KartuStatistik";
 
 export default function UserDashboardPage() {
   const { data: session } = useSession();
@@ -46,7 +47,7 @@ export default function UserDashboardPage() {
 
   return (
     <div className="space-y-5">
-      {/* Sapaan Pengguna */}
+      {/* 1. Sapaan Pengguna */}
       <section className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-xs">
@@ -65,50 +66,27 @@ export default function UserDashboardPage() {
         </div>
       </section>
 
-      {/* Ringkasan Status 4 Kolom */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] text-slate-500 font-medium">Total Booking</p>
-          <h3 className="text-xl font-bold text-slate-900 mt-0.5">
-            {userBookings.length}
-          </h3>
-          <span className="text-[10px] text-slate-400">Riwayat pesanan</span>
-        </div>
+      {/* 2. Kartu Statistik Metrik */}
+      <KartuStatistik
+        totalBooking={userBookings.length}
+        menunggu={pendingCount}
+        disetujui={confirmedCount}
+        arenaTersedia={lapangans.length}
+      />
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] text-slate-500 font-medium">Menunggu</p>
-          <h3 className="text-xl font-bold text-amber-600 mt-0.5">
-            {pendingCount}
-          </h3>
-          <span className="text-[10px] text-slate-400">Perlu konfirmasi</span>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] text-slate-500 font-medium">Disetujui</p>
-          <h3 className="text-xl font-bold text-green-600 mt-0.5">
-            {confirmedCount}
-          </h3>
-          <span className="text-[10px] text-slate-400">Siap untuk main</span>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] text-slate-500 font-medium">Arena Tersedia</p>
-          <h3 className="text-xl font-bold text-slate-900 mt-0.5">
-            {lapangans.length}
-          </h3>
-          <span className="text-[10px] text-slate-400">Lapangan aktif</span>
-        </div>
-      </section>
-
-      {/* Informasi & Panduan Reservasi */}
+      {/* 3. Informasi & Tata Tertib Arena */}
       <section className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-3.5">
         <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
           <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
             <Info className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-xs font-bold text-slate-900">Informasi & Tata Tertib Arena</h2>
-            <p className="text-[10px] text-slate-500">Petunjuk reservasi dan aturan penggunaan lapangan</p>
+            <h2 className="text-xs font-bold text-slate-900">
+              Informasi & Tata Tertib Arena
+            </h2>
+            <p className="text-[10px] text-slate-500">
+              Petunjuk reservasi dan aturan penggunaan lapangan
+            </p>
           </div>
         </div>
 

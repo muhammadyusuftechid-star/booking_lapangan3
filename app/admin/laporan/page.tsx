@@ -27,12 +27,13 @@ const formatDate = (date: Date) => {
 export default async function LaporanPage({
   searchParams,
 }: {
-  searchParams: { start?: string; end?: string };
+  searchParams: Promise<{ start?: string; end?: string }> | { start?: string; end?: string };
 }) {
-  const startDate = searchParams?.start || "";
-  const endDate = searchParams?.end || "";
+  const resolvedParams = await searchParams;
+  const startDate = resolvedParams?.start || "";
+  const endDate = resolvedParams?.end || "";
 
-  const dateFilter: any = {};
+  const dateFilter: Record<string, unknown> = {};
   if (startDate && endDate) {
     dateFilter.createdAt = {
       gte: new Date(`${startDate}T00:00:00.000Z`),
@@ -46,7 +47,7 @@ export default async function LaporanPage({
     include: {
       customer: { select: { name: true, email: true } },
       lapangan: { select: { name: true, price: true } },
-      payment: { select: { amount: true, status: true } },
+      payments: { select: { amount: true, status: true } },
     },
   });
 
@@ -57,7 +58,7 @@ export default async function LaporanPage({
   const totalPendapatan = bookings
     .filter((b) => b.status === "CONFIRMED")
     .reduce((sum, booking) => {
-      const paymentSum = booking.payment
+      const paymentSum = booking.payments
         .filter((p) => !["failed", "cancelled", "expire"].includes(p.status.toLowerCase()))
         .reduce((pSum, pay) => pSum + Number(pay.amount), 0);
       return sum + paymentSum;
@@ -192,8 +193,8 @@ export default async function LaporanPage({
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-slate-800">
-                        {b.payment.length > 0
-                          ? formatRupiah(b.payment.reduce((sum, p) => sum + Number(p.amount), 0))
+                        {b.payments && b.payments.length > 0
+                          ? formatRupiah(b.payments.reduce((sum, p) => sum + Number(p.amount), 0))
                           : "-"}
                       </td>
                     </tr>

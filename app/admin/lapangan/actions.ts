@@ -33,10 +33,20 @@ export async function removeLapangan(formData: FormData) {
   if (!id) return;
 
   try {
+    // Bersihkan pembayaran dan booking yang mengikat ke lapangan ini terlebih dahulu
+    await prisma.payment.deleteMany({
+      where: { booking: { lapanganId: id } },
+    });
+    await prisma.booking.deleteMany({
+      where: { lapanganId: id },
+    });
     await prisma.lapangan.delete({
       where: { id },
     });
     revalidatePath("/admin/lapangan");
+    revalidatePath("/admin");
+    revalidatePath("/user");
+    revalidatePath("/user/lapangan");
   } catch (error) {
     console.error("Gagal menghapus data dari database:", error);
   }

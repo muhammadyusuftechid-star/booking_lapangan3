@@ -33,34 +33,54 @@ const TIME_SLOTS = [
 export default async function LapanganPage({
   searchParams,
 }: {
-  searchParams: { checkLapanganId?: string; date?: string; selectedSlot?: string };
+  searchParams: Promise<{ checkLapanganId?: string; date?: string; selectedSlot?: string }> | { checkLapanganId?: string; date?: string; selectedSlot?: string };
 }) {
+  const resolvedParams = await searchParams;
   const lapangans = await prisma.lapangan.findMany({
     orderBy: { createdAt: "desc" },
   });
 
-  const selectedLapanganId = searchParams?.checkLapanganId || (lapangans[0]?.id ?? "");
-  const selectedDate = searchParams?.date || new Date().toISOString().split("T")[0];
-  const activeSlot = searchParams?.selectedSlot || "";
+  const selectedLapanganId = resolvedParams?.checkLapanganId || (lapangans[0]?.id ?? "");
+  const selectedDate = resolvedParams?.date || new Date().toISOString().split("T")[0];
+  const activeSlot = resolvedParams?.selectedSlot || "";
 
   let bookedSlots: { startTime: string; endTime: string; customerName?: string }[] = [];
   if (selectedLapanganId) {
     try {
+      const dayStart = new Date(`${selectedDate}T00:00:00.000Z`);
+      const dayEnd = new Date(`${selectedDate}T23:59:59.999Z`);
+
       const existingBookings = await prisma.booking.findMany({
         where: {
           lapanganId: selectedLapanganId,
-          date: new Date(selectedDate),
-          status: "CONFIRMED",
+          status: { in: ["CONFIRMED", "PENDING"] },
+          OR: [
+            {
+              startTime: {
+                lte: dayEnd,
+              },
+              endTime: {
+                gte: dayStart,
+              },
+            },
+          ],
         },
         include: { customer: { select: { name: true } } },
       });
 
-      bookedSlots = existingBookings.map((b) => ({
-        startTime: b.startTime,
-        endTime: b.endTime,
-        customerName: b.customer?.name || "Pelanggan",
-      }));
+      bookedSlots = existingBookings.map((b) => {
+        const s = new Date(b.startTime);
+        const e = new Date(b.endTime);
+        const formatH = (d: Date) => String(d.getHours()).padStart(2, "0");
+        const formatM = (d: Date) => String(d.getMinutes()).padStart(2, "0");
+        return {
+          startTime: `${formatH(s)}:${formatM(s)}`,
+          endTime: `${formatH(e)}:${formatM(e)}`,
+          customerName: b.customer?.name || "Pelanggan",
+        };
+      });
     } catch (e) {
+      console.error("Gagal memuat jadwal booking:", e);
       bookedSlots = [];
     }
   }
@@ -144,7 +164,7 @@ export default async function LapanganPage({
             <div className="space-y-3">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                 {TIME_SLOTS.map((slot, index) => {
-                  const matched = bookedSlots.find((b) => b.startTime === slot.start);
+                  const matched = bookedSlots.find((b) => b.startTime <= slot.start && b.endTime >= slot.end);
                   const isBooked = !!matched;
                   const isSelected = activeSlot === slot.start;
 
@@ -179,8 +199,8 @@ export default async function LapanganPage({
                   <div>
                     <p className="font-bold text-slate-800">Detail Slot Terpilih: Pukul {activeSlot}</p>
                     <p className="text-slate-500 mt-0.5">
-                      {bookedSlots.find(b => b.startTime === activeSlot) 
-                        ? `Status: Sedang dipakai oleh ${bookedSlots.find(b => b.startTime === activeSlot)?.customerName}` 
+                      {bookedSlots.find(b => b.startTime <= activeSlot && b.endTime > activeSlot) 
+                        ? `Status: Sedang dipakai oleh ${bookedSlots.find(b => b.startTime <= activeSlot && b.endTime > activeSlot)?.customerName}` 
                         : "Status: Kosong dan tersedia untuk dibooking."}
                     </p>
                   </div>

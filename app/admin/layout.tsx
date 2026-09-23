@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
+import { useSession, signOut } from "@/lib/auth-client";
+import { getUserRoleAction } from "@/app/user/actions";
 import { 
   CalendarDays, 
   BarChart3, 
   Building2, 
   FileText, 
-  LogOut 
+  LogOut,
+  Loader2,
+  ShieldCheck,
+  User as UserIcon
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -18,16 +23,61 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session, isPending: isSessionLoading } = useSession();
+  const [isVerifyingAccess, setIsVerifyingAccess] = useState(true);
+
+  useEffect(() => {
+    async function checkAdminAccess() {
+      if (!isSessionLoading && !session) {
+        router.replace("/login");
+        return;
+      }
+
+      if (session?.user?.email) {
+        const res = await getUserRoleAction(session.user.email);
+        const resolvedRole = res.success
+          ? String(res.role).toUpperCase()
+          : String((session.user as { role?: string })?.role || "USER").toUpperCase();
+
+        if (resolvedRole !== "ADMIN") {
+          router.replace("/user");
+          return;
+        }
+
+        setIsVerifyingAccess(false);
+      } else if (!isSessionLoading && !session) {
+        router.replace("/login");
+      }
+    }
+
+    checkAdminAccess();
+  }, [session, isSessionLoading, router]);
 
   const handleLogout = async () => {
     await signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/");
+          router.push("/login");
         },
       },
     });
   };
+
+  if (isSessionLoading || isVerifyingAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-800">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
+          <p className="text-xs text-slate-500 font-medium">
+            Memverifikasi hak akses Administrator...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const adminName = session?.user?.name || "Administrator";
+  const adminEmail = session?.user?.email || "";
 
   return (
     <div className="min-h-screen bg-[#f6f8fc] text-slate-800 flex">
@@ -40,7 +90,10 @@ export default function AdminLayout({
             </div>
             <div>
               <p className="text-[14px] font-bold tracking-tight text-slate-900">Booking Lapangan</p>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400">Administrator</p>
+              <div className="flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">Administrator</p>
+              </div>
             </div>
           </Link>
         </div>
@@ -85,13 +138,24 @@ export default function AdminLayout({
           </Link>
         </nav>
 
-        <div className="border-t border-slate-100 p-4">
+        {/* Info Profil Admin Aktif */}
+        <div className="border-t border-slate-100 p-4 space-y-3">
+          <div className="flex items-center gap-3 px-2 py-1.5 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+              {adminName.charAt(0).toUpperCase()}
+            </div>
+            <div className="overflow-hidden flex-1">
+              <p className="text-xs font-bold text-slate-800 truncate">{adminName}</p>
+              <p className="text-[10px] text-slate-400 truncate">{adminEmail}</p>
+            </div>
+          </div>
+
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[11px] font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600 cursor-pointer"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[11px] font-semibold text-slate-600 transition hover:bg-red-50 hover:text-red-600 cursor-pointer"
           >
-            <LogOut className="h-4 w-4" />
-            <span>Keluar</span>
+            <LogOut className="h-4 w-4 text-slate-400 group-hover:text-red-600" />
+            <span>Keluar Akun</span>
           </button>
         </div>
       </aside>
