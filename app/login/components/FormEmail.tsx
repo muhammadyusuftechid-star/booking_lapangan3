@@ -66,7 +66,7 @@ export default function FormEmail({ initialError }: FormEmailProps) {
         if (res.error) {
           setError(
             res.error.message ||
-              "Pendaftaran gagal. Periksa kembali format email dan kata sandi."
+            "Pendaftaran gagal. Periksa kembali format email dan kata sandi."
           );
         } else {
           setSuccessMsg("Akun berhasil dibuat! Mengalihkan ke dashboard...");
@@ -82,7 +82,7 @@ export default function FormEmail({ initialError }: FormEmailProps) {
         if (res.error) {
           setError(
             res.error.message ||
-              "Email atau kata sandi salah. Silakan coba lagi atau daftar akun baru."
+            "Email atau kata sandi salah. Silakan coba lagi atau daftar akun baru."
           );
         } else {
           setSuccessMsg("Berhasil masuk! Mengalihkan...");
@@ -139,7 +139,7 @@ export default function FormEmail({ initialError }: FormEmailProps) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Contoh: Muhammad Yusuf"
+                placeholder="Contoh: Uzumaki Naruto"
                 disabled={loading}
                 className="w-full text-xs pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-slate-800 disabled:opacity-50"
               />
