@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { getUserRoleAction } from "@/app/user/actions";
 import { 
-  CalendarDays, 
   BarChart3, 
   Building2, 
-  FileText, 
+  Users,
   LogOut,
   Loader2,
   ShieldCheck,
@@ -85,8 +85,15 @@ export default function AdminLayout({
       <aside className="fixed left-0 top-0 z-50 hidden h-screen w-[270px] flex-col border-r border-slate-200 bg-white lg:flex shadow-xs">
         <div className="flex h-[76px] items-center border-b border-slate-100 px-6">
           <Link href="/admin" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/20">
-              <CalendarDays className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 shadow-xs overflow-hidden bg-white">
+              <Image
+                src="/logo.png"
+                alt="Logo Booking Lapangan"
+                width={40}
+                height={40}
+                className="w-full h-full object-contain p-0.5"
+                priority
+              />
             </div>
             <div>
               <p className="text-[14px] font-bold tracking-tight text-slate-900">Booking Lapangan</p>
@@ -110,7 +117,7 @@ export default function AdminLayout({
             }`}
           >
             <BarChart3 className={`h-[18px] w-[18px] ${pathname === "/admin" ? "text-blue-600" : "text-slate-400"}`} />
-            <span>Dashboard</span>
+            <span>Dashboard & Laporan</span>
           </Link>
 
           <Link
@@ -126,15 +133,15 @@ export default function AdminLayout({
           </Link>
 
           <Link
-            href="/admin/laporan"
+            href="/admin/pengguna"
             className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-[12px] font-semibold transition ${
-              pathname?.includes("/admin/laporan") 
+              pathname?.includes("/admin/pengguna") 
                 ? "bg-blue-50 text-blue-700 shadow-xs" 
                 : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
             }`}
           >
-            <FileText className={`h-[18px] w-[18px] ${pathname?.includes("/admin/laporan") ? "text-blue-600" : "text-slate-400"}`} />
-            <span>Laporan</span>
+            <Users className={`h-[18px] w-[18px] ${pathname?.includes("/admin/pengguna") ? "text-blue-600" : "text-slate-400"}`} />
+            <span>Data Pengguna</span>
           </Link>
         </nav>
 

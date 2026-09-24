@@ -149,7 +149,9 @@ export async function createBookingAction({
 
     revalidatePath("/user");
     revalidatePath("/user/riwayat");
+    revalidatePath("/user/pesan");
     revalidatePath("/admin");
+    revalidatePath("/admin/lapangan");
 
     return { success: true, data: newBooking };
   } catch (error: unknown) {
@@ -171,5 +173,46 @@ export async function getUserRoleAction(userEmail: string) {
   } catch (error: unknown) {
     console.error("Error getUserRoleAction:", error);
     return { success: false, role: "USER" };
+  }
+}
+
+// 5. Ambil slot jadwal yang sudah dibooking pada lapangan & tanggal tertentu
+export async function getBookedSlotsAction(lapanganId: string, date: string) {
+  try {
+    if (!lapanganId || !date) return { success: true, bookedSlots: [] };
+
+    const dayStart = new Date(`${date}T00:00:00`);
+    const dayEnd = new Date(`${date}T23:59:59.999`);
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        lapanganId,
+        status: { in: ["PENDING", "CONFIRMED"] },
+        startTime: { lte: dayEnd },
+        endTime: { gte: dayStart },
+      },
+      select: {
+        startTime: true,
+        endTime: true,
+        status: true,
+      },
+      orderBy: { startTime: "asc" },
+    });
+
+    const bookedSlots = bookings.map((b) => {
+      const s = new Date(b.startTime);
+      const e = new Date(b.endTime);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return {
+        start: `${pad(s.getHours())}:${pad(s.getMinutes())}`,
+        end: `${pad(e.getHours())}:${pad(e.getMinutes())}`,
+        status: b.status,
+      };
+    });
+
+    return { success: true, bookedSlots };
+  } catch (error: unknown) {
+    console.error("Error getBookedSlotsAction:", error);
+    return { success: false, bookedSlots: [] };
   }
 }

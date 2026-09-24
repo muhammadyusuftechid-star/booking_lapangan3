@@ -3,12 +3,12 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
-import { getLapangans, createBookingAction } from "@/app/user/actions";
+import { getLapangans, createBookingAction, getBookedSlotsAction } from "@/app/user/actions";
 import { Lapangan, BookingWithRelations } from "@/types/booking";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 import PilihLapangan from "./components/PilihLapangan";
-import PilihJadwal from "./components/PilihJadwal";
+import PilihJadwal, { BookedSlotItem } from "./components/PilihJadwal";
 import MetodeBayar from "./components/MetodeBayar";
 import BuktiSukses from "./components/BuktiSukses";
 
@@ -30,6 +30,9 @@ function FormPemesanan() {
   const [startHour, setStartHour] = useState<string>("08:00");
   const [durationHours, setDurationHours] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<"QRIS" | "TRANSFER_BANK">("QRIS");
+
+  const [bookedSlots, setBookedSlots] = useState<BookedSlotItem[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
 
   const [isLoadingFields, setIsLoadingFields] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +63,29 @@ function FormPemesanan() {
     loadFields();
   }, [preselectedFieldId]);
 
+  // Ambil slot jadwal yang sudah terisi di lapangan & tanggal terpilih
+  useEffect(() => {
+    async function loadBookedSlots() {
+      if (!selectedFieldId || !bookingDate) {
+        setBookedSlots([]);
+        return;
+      }
+      try {
+        setIsLoadingSlots(true);
+        const res = await getBookedSlotsAction(selectedFieldId, bookingDate);
+        if (res.success && res.bookedSlots) {
+          setBookedSlots(res.bookedSlots);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil jadwal terisi:", err);
+      } finally {
+        setIsLoadingSlots(false);
+      }
+    }
+
+    loadBookedSlots();
+  }, [selectedFieldId, bookingDate]);
+
   const selectedLapangan = lapangans.find((f) => f.id === selectedFieldId);
 
   // Hitung jam selesai
@@ -89,6 +115,17 @@ function FormPemesanan() {
 
     if (!bookingDate) {
       setErrorMessage("Silakan tentukan tanggal sewa.");
+      return;
+    }
+
+    // Validasi bentrok slot sebelum submit
+    const [h, m] = startHour.split(":").map(Number);
+    const slotEndH = h + durationHours;
+    const slotEnd = `${String(slotEndH).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    const isConflict = bookedSlots.some((b) => startHour < b.end && slotEnd > b.start);
+
+    if (isConflict) {
+      setErrorMessage(`Jadwal jam ${startHour} s.d ${endHour} WIB sudah terisi. Silakan pilih jam atau lapangan lain.`);
       return;
     }
 
@@ -180,6 +217,8 @@ function FormPemesanan() {
             startHour={startHour}
             durationHours={durationHours}
             endHour={endHour}
+            bookedSlots={bookedSlots}
+            isLoadingSlots={isLoadingSlots}
             onDateChange={setBookingDate}
             onStartHourChange={setStartHour}
             onDurationChange={setDurationHours}

@@ -44,8 +44,10 @@ export async function updateBookingStatusAction(
     });
 
     revalidatePath("/admin");
+    revalidatePath("/admin/lapangan");
     revalidatePath("/user");
     revalidatePath("/user/riwayat");
+    revalidatePath("/user/pesan");
 
     return { success: true, data: updated };
   } catch (error: unknown) {

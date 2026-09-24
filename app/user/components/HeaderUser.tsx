@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
-import { CalendarDays, LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 
 interface HeaderUserProps {
   userName: string;
@@ -38,10 +40,15 @@ export default function HeaderUser({ userName, userEmail }: HeaderUserProps) {
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* Brand Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold">
-            <CalendarDays className="w-4 h-4" />
-          </div>
+        <Link href="/user" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+          <Image
+            src="/logo.png"
+            alt="Logo Booking Lapangan"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-lg object-contain"
+            priority
+          />
           <div>
             <span className="font-bold text-sm text-slate-900 block leading-tight">
               Booking Lapangan
@@ -50,7 +57,7 @@ export default function HeaderUser({ userName, userEmail }: HeaderUserProps) {
               Portal Pelanggan
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* Profil & Tombol Logout */}
         <div className="flex items-center gap-2.5">

@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Booking Lapangan - Sistem Reservasi Arena Olahraga",
   description: "Sistem reservasi dan booking lapangan olahraga cepat, mudah, dan terintegrasi.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

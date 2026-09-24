@@ -149,3 +149,30 @@ export async function getUserRoleAction(userEmail: string) {
 ```
 * **Terjemahan**:
   * Mengambil nilai kolom `role` dari tabel `user`. Dipakai oleh sistem gerbang keamanan untuk memastikan siapa yang boleh masuk ke `/admin`.
+
+---
+
+### 5. `getBookedSlotsAction(lapanganId, date)` — Pengecekan Slot Terisi Real-Time
+```typescript
+export async function getBookedSlotsAction(lapanganId: string, date: string) {
+  const dayStart = new Date(`${date}T00:00:00`);
+  const dayEnd = new Date(`${date}T23:59:59.999`);
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      lapanganId,
+      status: { in: ["PENDING", "CONFIRMED"] },
+      startTime: { lte: dayEnd },
+      endTime: { gte: dayStart },
+    },
+    select: { startTime: true, endTime: true, status: true },
+    orderBy: { startTime: "asc" },
+  });
+
+  return { success: true, bookedSlots: [...] };
+}
+```
+* **Terjemahan**:
+  * Mengambil semua jam sewa yang sudah terisi di lapangan dan tanggal yang dipilih user.
+  * Hasilnya dikirim ke komponen formulir [`PilihJadwal.tsx`](file:///home/yusuf/projekan/Pelatihan%20Bpvp/booking_lapangan/app/user/pesan/components/PilihJadwal.tsx) agar tombol jam yang sudah dibooking otomatis dinonaktifkan (*disabled*) dan diberi label **(Penuh / Sudah Dipesan)**.
+

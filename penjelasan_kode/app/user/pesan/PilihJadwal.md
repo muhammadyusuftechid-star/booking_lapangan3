@@ -7,8 +7,11 @@
 ---
 
 ## 🎯 Peran Utama File Ini
-Komponen langkah kedua yang menangani penanggalan dan durasi bermain:
+Komponen langkah kedua yang menangani penanggalan, durasi bermain, serta **pencegahan bentrok jadwal langsung di layar pengguna**:
 1. **Pemilih Tanggal**: Menggunakan `<input type="date">` dengan batas minimal hari ini (`min={todayStr}`) agar user tidak bisa memesan tanggal di masa lalu.
-2. **Slot Jam Mulai**: Pilihan dropdown dari jam `07:00` sampai `21:00` WIB.
-3. **Pilihan Durasi**: Dropdown opsi durasi 1 Jam, 2 Jam, 3 Jam, atau 4 Jam.
-4. **Kotak Estimasi Jam Selesai**: Menampilkan secara dinamis jam berapa sewa lapangan akan berakhir (misal: "10:00 WIB").
+2. **Pengecekan Slot Terisi (`bookedSlots`)**: Menerima data slot jadwal yang sudah dipesan dari database MySQL.
+3. **Pencegahan Bentrok Visual**:
+   - Jika suatu jam sudah dipesan orang lain, opsi jam tersebut diberi label **(Penuh / Sudah Dipesan)** dan otomatis dinonaktifkan (`disabled={isBooked}`) dengan teks abu-abu.
+   - Peringatan kuning (*alert*) akan muncul jika jam yang sedang dipilih bertabrakan dengan pesanan yang sudah ada.
+4. **Pilihan Durasi**: Dropdown opsi durasi 1 Jam, 2 Jam, 3 Jam, atau 4 Jam.
+5. **Kotak Estimasi Jam Selesai**: Menampilkan secara dinamis jam berapa sewa lapangan akan berakhir (misal: "08:00 - 10:00 WIB").

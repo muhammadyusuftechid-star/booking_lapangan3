@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { getUserRoleAction } from "@/app/user/actions";
-import { CalendarDays, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import FormEmail from "./components/FormEmail";
 import TombolGoogle from "./components/TombolGoogle";
 
@@ -60,10 +61,15 @@ function KontenLogin() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between text-slate-800">
       {/* Header Aplikasi */}
       <header className="w-full bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 py-3.5 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold">
-            <CalendarDays className="w-4 h-4" />
-          </div>
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-2.5">
+          <Image
+            src="/logo.png"
+            alt="Logo Booking Lapangan"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-lg object-contain"
+            priority
+          />
           <span className="font-bold text-sm text-slate-900">
             Sistem Booking Lapangan
           </span>
@@ -74,6 +80,16 @@ function KontenLogin() {
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-sm bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-5">
           <div className="text-center">
+            <div className="mx-auto w-12 h-12 mb-3 rounded-xl overflow-hidden border border-slate-100 shadow-xs flex items-center justify-center bg-slate-50">
+              <Image
+                src="/logo.png"
+                alt="Logo Booking Lapangan"
+                width={48}
+                height={48}
+                className="w-full h-full object-contain p-0.5"
+                priority
+              />
+            </div>
             <h1 className="text-lg font-bold text-slate-900">Selamat Datang</h1>
             <p className="text-xs text-slate-500 mt-1">
               Silakan masuk atau daftar untuk memesan lapangan olahraga

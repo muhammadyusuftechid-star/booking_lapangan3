@@ -9,6 +9,7 @@ import {
   Clock
 } from "lucide-react";
 import { createLapangan, removeLapangan } from "./actions";
+import ModalEditLapangan from "./components/ModalEditLapangan";
 import Link from "next/link";
 
 const formatRupiah = (value: number) => {
@@ -220,22 +221,29 @@ export default async function LapanganPage({
             <p className="text-[10px] text-slate-400 mt-0.5">Tambah data lapangan secara permanen ke database MySQL.</p>
           </div>
           <form action={createLapangan} className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">Nama Lapangan</label>
+                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">Nama Lapangan *</label>
                 <input type="text" name="name" required placeholder="Cth: Futsal Premium A" className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:border-blue-500 outline-none bg-slate-50/50" />
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">Tarif / Jam (Rp)</label>
+                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">Tarif / Jam (Rp) *</label>
                 <input type="number" name="price" required min="1" placeholder="Cth: 150000" className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:border-blue-500 outline-none bg-slate-50/50" />
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">Lokasi</label>
+                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">Lokasi *</label>
                 <input type="text" name="location" required placeholder="Cth: Indoor Arena" className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:border-blue-500 outline-none bg-slate-50/50" />
               </div>
               <div>
+                <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">
+                  URL / Link Foto Lapangan
+                  <span className="text-[10px] text-slate-400 font-normal ml-1">(Bisa link web atau /lapangan-1.jpg)</span>
+                </label>
+                <input type="text" name="picture_url" placeholder="Cth: /lapangan-1.jpg atau https://..." className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:border-blue-500 outline-none bg-slate-50/50" />
+              </div>
+              <div>
                 <label className="mb-1.5 block text-[11px] font-semibold text-slate-700">Deskripsi</label>
-                <input type="text" name="description" placeholder="Cth: Lapangan sintetis" className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:border-blue-500 outline-none bg-slate-50/50" />
+                <input type="text" name="description" placeholder="Cth: Rumput sintetis" className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs focus:border-blue-500 outline-none bg-slate-50/50" />
               </div>
             </div>
             <div className="mt-5 flex justify-end">
@@ -275,12 +283,20 @@ export default async function LapanganPage({
                       <td className="px-6 py-4 text-slate-400 font-medium">{String(index + 1).padStart(2, "0")}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                            <Building2 className="h-4 w-4" />
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 overflow-hidden shadow-2xs">
+                            {item.picture_url ? (
+                              <img
+                                src={item.picture_url}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Building2 className="h-5 w-5 text-slate-400" />
+                            )}
                           </div>
                           <div>
                             <p className="font-bold text-slate-800 text-[11px]">{item.name}</p>
-                            <p className="text-[10px] text-slate-400">{item.description || "Tidak ada deskripsi"}</p>
+                            <p className="text-[10px] text-slate-400 line-clamp-1">{item.description || "Tidak ada deskripsi"}</p>
                           </div>
                         </div>
                       </td>
@@ -295,12 +311,15 @@ export default async function LapanganPage({
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <form action={removeLapangan}>
-                          <input type="hidden" name="id" value={item.id} />
-                          <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[10px] font-semibold text-red-600 hover:bg-red-100 transition cursor-pointer">
-                            <Trash2 className="h-3 w-3" /> Hapus
-                          </button>
-                        </form>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <ModalEditLapangan lapangan={item} />
+                          <form action={removeLapangan}>
+                            <input type="hidden" name="id" value={item.id} />
+                            <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[10px] font-semibold text-red-600 hover:bg-red-100 transition cursor-pointer">
+                              <Trash2 className="h-3 w-3" /> Hapus
+                            </button>
+                          </form>
+                        </div>
                       </td>
                     </tr>
                   ))

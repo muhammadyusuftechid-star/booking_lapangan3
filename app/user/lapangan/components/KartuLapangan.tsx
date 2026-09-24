@@ -1,28 +1,41 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Lapangan } from "@/types/booking";
-import { MapPin, CalendarDays, CalendarPlus } from "lucide-react";
+import { MapPin, CalendarDays, CalendarPlus, ImageOff } from "lucide-react";
 
 interface KartuLapanganProps {
   field: Lapangan;
 }
 
 export default function KartuLapangan({ field }: KartuLapanganProps) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col hover:border-slate-300 transition-colors shadow-xs">
       {/* Gambar Lapangan */}
       <div className="h-44 w-full bg-slate-100 relative overflow-hidden">
-        {field.picture_url ? (
+        {field.picture_url && !imgError ? (
           <img
             src={field.picture_url}
             alt={field.name}
             className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1 bg-slate-50 border-b border-slate-100">
-            <CalendarDays className="w-6 h-6 text-slate-300" />
-            <span className="text-[11px] text-slate-400">Foto belum tersedia</span>
+            {field.picture_url && imgError ? (
+              <>
+                <ImageOff className="w-6 h-6 text-slate-300" />
+                <span className="text-[11px] text-slate-400">Link gambar tidak dapat dimuat</span>
+              </>
+            ) : (
+              <>
+                <CalendarDays className="w-6 h-6 text-slate-300" />
+                <span className="text-[11px] text-slate-400">Foto belum tersedia</span>
+              </>
+            )}
           </div>
         )}
       </div>

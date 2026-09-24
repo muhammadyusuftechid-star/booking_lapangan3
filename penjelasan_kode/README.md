@@ -7,6 +7,8 @@ Folder ini dibuat khusus untuk membedah, menerjemahkan, dan menjelaskan setiap f
 
 ## 🗺️ Peta Navigasi File & Modul
 
+> 💡 **Panduan Utama Baru:** Baca [**analisis_dan_kamus_kode.md**](./analisis_dan_kamus_kode.md) untuk penjelasan mendalam tentang semua kata kunci, konsep, dan arsitektur program (`export`, `const`, `adapter`, Next.js Directives, React Hooks, TypeScript, dsb).
+
 Klik link di bawah ini untuk langsung membaca penjelasan detail dari masing-masing file:
 
 ### ⚙️ 1. Konfigurasi & Basis Data
@@ -71,11 +73,15 @@ Klik link di bawah ini untuk langsung membaca penjelasan detail dari masing-masi
 ### 🛡️ 6. Modul Administrator (Folder `app/admin/`)
 * [**app/admin/actions.md**](./app/admin/actions.md) — **(Backend)** Server Actions admin untuk kelola status booking dan data lapangan.
 * [**app/admin/layout.md**](./app/admin/layout.md) — Sidebar navigasi admin dan proteksi ketat (hanya akun role `ADMIN` yang diizinkan).
-* [**app/admin/page.md**](./app/admin/page.md) — Dashboard utama ringkasan pendapatan, statistik, dan tabel 10 booking terbaru.
+* [**app/admin/page.md**](./app/admin/page.md) — Dashboard & Laporan Terpadu: ringkasan omzet, filter rentang tanggal & status, ekspor cetak, dan tabel aksi booking.
+* [**app/admin/TombolCetak.md**](./app/admin/TombolCetak.md) — Tombol cetak laporan fisik atau simpan PDF resmi menggunakan `window.print()`.
 * [**app/admin/AksiBooking.md**](./app/admin/AksiBooking.md) — Tombol interaktif untuk menyetujui (**Setujui**) atau membatalkan (**Tolak**) pesanan.
 * [**app/admin/lapangan/page.md**](./app/admin/lapangan/page.md) — Halaman kelola fasilitas lapangan dan visualisasi jadwal terisi/kosong.
-* [**app/admin/lapangan/actions.md**](./app/admin/lapangan/actions.md) — Operasi database penambahan dan penghapusan lapangan secara aman.
-* [**app/admin/laporan/page.md**](./app/admin/laporan/page.md) — Haporan rekapitulasi transaksi dengan filter rentang tanggal dan omset total.
+* [**app/admin/lapangan/ModalEditLapangan.md**](./app/admin/lapangan/ModalEditLapangan.md) — Modal interaktif untuk mengubah data tarif, nama, lokasi, dan foto lapangan.
+* [**app/admin/lapangan/actions.md**](./app/admin/lapangan/actions.md) — Operasi database penambahan, pembaruan (edit), dan penghapusan lapangan.
+* [**app/admin/pengguna/page.md**](./app/admin/pengguna/page.md) — Manajemen data pengguna, statistik akun, dan pencarian member.
+* [**app/admin/pengguna/actions.md**](./app/admin/pengguna/actions.md) — Server Actions untuk toggle role akun antara USER dan ADMIN.
+* [**app/admin/pengguna/TombolRole.md**](./app/admin/pengguna/TombolRole.md) — Tombol interaktif pengubah hak akses pengguna dengan konfirmasi.
 
 ---
 
